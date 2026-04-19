@@ -1,247 +1,126 @@
--- Aurora RP - Additional Jobs Configuration
--- Extended job list for DarkRP
+-- Aurora RP - Server-side Jobs Configuration
+-- DarkRP job definitions
 
-GM.JobCategories = {
-    ["Службы порядка"] = true,
-    ["Медицина"] = true,
-    ["Транспорт"] = true,
-    ["Бизнес"] = true,
-    ["Рабочие"] = true,
-    ["Государство"] = true,
-    ["Другие"] = true
-}
+if not DarkRP then return end
 
--- Define custom jobs (these will be added to DarkRP)
-DarkRP.createJob("Полицейский", {
+-- Police Chief
+DarkRP.createJob("Police Chief", {
     color = Color(25, 25, 170),
     model = {"models/player/police.mdl"},
-    description = [[Защита порядка и безопасности города. 
-Борьба с преступностью и обеспечение безопасности граждан.]],
-    weapons = {"weapon_pistol", "weapon_stunstick", "weapon_crowbar"},
+    description = [[You are the head of the police force. Lead your team and maintain order!]],
+    weapons = {"weapon_glock2", "weapon_stunstick", "weapon_m9k_m4"},
+    command = "policechief",
+    max = 1,
+    salary = GAMEMODE.Config.normalsalary * 3,
+    admin = 0,
+    vote = false,
+    hasLicense = true,
+    category = "Law Enforcement"
+})
+
+-- Police Officer
+DarkRP.createJob("Police Officer", {
+    color = Color(50, 50, 200),
+    model = {"models/player/police.mdl"},
+    description = [[Protect and serve the citizens of Aurora RP.]],
+    weapons = {"weapon_glock2", "weapon_stunstick"},
     command = "police",
-    salary = 500,
+    max = 5,
+    salary = GAMEMODE.Config.normalsalary * 1.8,
     admin = 0,
     vote = false,
     hasLicense = true,
-    category = "Службы порядка",
-    PlayerModel = "models/player/police.mdl"
+    category = "Law Enforcement"
 })
 
-DarkRP.createJob("Шериф", {
-    color = Color(25, 25, 170),
-    model = {"models/player/police.mdl"},
-    description = [[Глава полицейского департамента.
-Руководство полицией и координация операций.]],
-    weapons = {"weapon_pistol", "weapon_smg1", "weapon_stunstick"},
-    command = "chief",
-    salary = 700,
-    admin = 0,
-    vote = true,
-    hasLicense = true,
-    category = "Службы порядка",
-    PlayerModel = "models/player/police.mdl",
-    needToChangeFrom = {"Полицейский"}
-})
-
-DarkRP.createJob("SWAT", {
-    color = Color(20, 20, 120),
-    model = {"models/player/swat.mdl"},
-    description = [[Спецназ для особых операций.
-Решение критических ситуаций и задержание опасных преступников.]],
-    weapons = {"weapon_ar2", "weapon_pistol", "weapon_stunstick"},
-    command = "swat",
-    salary = 600,
-    admin = 0,
-    vote = false,
-    hasLicense = true,
-    category = "Службы порядка",
-    PlayerModel = "models/player/swat.mdl",
-    needToChangeFrom = {"Полицейский"}
-})
-
-DarkRP.createJob("Врач", {
-    color = Color(255, 100, 100),
-    model = {"models/player/group03/female_02.mdl", "models/player/group03/male_02.mdl"},
-    description = [[Лечение раненых граждан.
-Оказание медицинской помощи и продажа медикаментов.]],
+-- Medic
+DarkRP.createJob("Medic", {
+    color = Color(200, 50, 50),
+    model = {"models/player/combine_soldier_prisonguard.mdl"},
+    description = [[Heal injured citizens and keep everyone healthy!]],
     weapons = {"weapon_medkit"},
     command = "medic",
-    salary = 450,
+    max = 4,
+    salary = GAMEMODE.Config.normalsalary * 1.6,
     admin = 0,
     vote = false,
     hasLicense = true,
-    category = "Медицина",
-    PlayerModel = "models/player/group03/female_02.mdl"
+    category = "Medical"
 })
 
-DarkRP.createJob("Хирург", {
-    color = Color(255, 80, 80),
-    model = {"models/player/group03/male_02.mdl", "models/player/group03/female_02.mdl"},
-    description = [[Проведение сложных операций.
-Высококвалифицированный медицинский персонал.]],
-    weapons = {"weapon_medkit"},
-    command = "surgeon",
-    salary = 650,
-    admin = 0,
-    vote = false,
-    hasLicense = true,
-    category = "Медицина",
-    PlayerModel = "models/player/group03/male_02.mdl",
-    needToChangeFrom = {"Врач"}
-})
-
-DarkRP.createJob("Таксист", {
+-- Taxi Driver
+DarkRP.createJob("Taxi Driver", {
     color = Color(255, 200, 0),
-    model = {"models/player/eli.mdl"},
-    description = [[Перевозка пассажиров по городу.
-Зарабатывайте деньги, перевозя людей из точки А в точку Б.]],
+    model = {"models/player/group01/male01.mdl"},
+    description = [[Transport citizens around the city for money.]],
     weapons = {},
     command = "taxi",
-    salary = 350,
-    admin = 0,
-    vote = false,
-    hasLicense = true,
-    category = "Транспорт",
-    PlayerModel = "models/player/eli.mdl"
-})
-
-DarkRP.createJob("Водитель автобуса", {
-    color = Color(200, 180, 0),
-    model = {"models/player/barney.mdl"},
-    description = [[Общественный транспорт.
-Перевозка пассажиров по маршруту.]],
-    weapons = {},
-    command = "busdriver",
-    salary = 300,
-    admin = 0,
-    vote = false,
-    hasLicense = true,
-    category = "Транспорт",
-    PlayerModel = "models/player/barney.mdl"
-})
-
-DarkRP.createJob("Дальнобойщик", {
-    color = Color(180, 160, 0),
-    model = {"models/player/breen.mdl"},
-    description = [[Грузоперевозки на дальние расстояния.
-Транспортировка грузов между городами.]],
-    weapons = {},
-    command = "truckdriver",
-    salary = 400,
-    admin = 0,
-    vote = false,
-    hasLicense = true,
-    category = "Транспорт",
-    PlayerModel = "models/player/breen.mdl"
-})
-
-DarkRP.createJob("Продавец", {
-    color = Color(100, 200, 100),
-    model = {"models/player/group01/female_01.mdl", "models/player/group01/male_01.mdl"},
-    description = [[Работа в магазине.
-Продажа товаров гражданам.]],
-    weapons = {},
-    command = "seller",
-    salary = 250,
+    max = 6,
+    salary = GAMEMODE.Config.normalsalary * 1.3,
     admin = 0,
     vote = false,
     hasLicense = false,
-    category = "Бизнес",
-    PlayerModel = "models/player/group01/female_01.mdl"
+    category = "Services"
 })
 
-DarkRP.createJob("Менеджер", {
-    color = Color(80, 180, 80),
-    model = {"models/player/group01/male_01.mdl"},
-    description = [[Управление бизнесом.
-Координация работы сотрудников.]],
-    weapons = {},
-    command = "manager",
-    salary = 500,
+-- Gun Dealer
+DarkRP.createJob("Gun Dealer", {
+    color = Color(100, 100, 100),
+    model = {"models/player/group01/male02.mdl"},
+    description = [[Sell weapons to lawful citizens.]],
+    weapons = {"weapon_glock2"},
+    command = "gun",
+    max = 2,
+    salary = GAMEMODE.Config.normalsalary * 1.5,
     admin = 0,
     vote = false,
-    hasLicense = false,
-    category = "Бизнес",
-    PlayerModel = "models/player/group01/male_01.mdl",
-    needToChangeFrom = {"Продавец"}
+    hasLicense = true,
+    category = "Special"
 })
 
-DarkRP.createJob("Банкир", {
-    color = Color(60, 160, 60),
-    model = {"models/player/gman_high.mdl"},
-    description = [[Работа в банке.
-Управление финансовыми операциями.]],
+-- Banker
+DarkRP.createJob("Banker", {
+    color = Color(0, 150, 0),
+    model = {"models/player/group01/female01.mdl"},
+    description = [[Manage the bank and help citizens with their money.]],
     weapons = {},
     command = "banker",
-    salary = 800,
+    max = 2,
+    salary = GAMEMODE.Config.normalsalary * 1.7,
     admin = 0,
     vote = false,
     hasLicense = true,
-    category = "Бизнес",
-    PlayerModel = "models/player/gman_high.mdl"
+    category = "Services"
 })
 
-DarkRP.createJob("Шахтёр", {
-    color = Color(100, 80, 60),
-    model = {"models/player/group03/male_04.mdl"},
-    description = [[Добыча ресурсов.
-Добыча полезных ископаемых в шахте.]],
-    weapons = {"weapon_crowbar", "weapon_pickaxe"},
-    command = "miner",
-    salary = 300,
+-- Fire Chief
+DarkRP.createJob("Fire Chief", {
+    color = Color(200, 100, 0),
+    model = {"models/player/firefighter.mdl"},
+    description = [[Lead the fire department and save lives!]],
+    weapons = {},
+    command = "firechief",
+    max = 1,
+    salary = GAMEMODE.Config.normalsalary * 2,
     admin = 0,
     vote = false,
-    hasLicense = false,
-    category = "Рабочие",
-    PlayerModel = "models/player/group03/male_04.mdl"
+    hasLicense = true,
+    category = "Emergency"
 })
 
-DarkRP.createJob("Строитель", {
-    color = Color(120, 100, 80),
-    model = {"models/player/group03/male_03.mdl"},
-    description = [[Строительство зданий.
-Возведение новых построек в городе.]],
-    weapons = {"weapon_crowbar", "weapon_tool"},
-    command = "builder",
-    salary = 350,
+-- Fire Fighter
+DarkRP.createJob("Fire Fighter", {
+    color = Color(220, 120, 20),
+    model = {"models/player/firefighter.mdl"},
+    description = [[Put out fires and rescue people.]],
+    weapons = {},
+    command = "firefighter",
+    max = 4,
+    salary = GAMEMODE.Config.normalsalary * 1.5,
     admin = 0,
     vote = false,
-    hasLicense = false,
-    category = "Рабочие",
-    PlayerModel = "models/player/group03/male_03.mdl"
+    hasLicense = true,
+    category = "Emergency"
 })
 
-DarkRP.createJob("Электрик", {
-    color = Color(140, 120, 100),
-    model = {"models/player/group03/male_05.mdl"},
-    description = [[Ремонт электропроводки.
-Обслуживание электрических систем города.]],
-    weapons = {"weapon_tool"},
-    command = "electrician",
-    salary = 400,
-    admin = 0,
-    vote = false,
-    hasLicense = false,
-    category = "Рабочие",
-    PlayerModel = "models/player/group03/male_05.mdl"
-})
-
-DarkRP.createJob("Журналист", {
-    color = Color(200, 150, 50),
-    model = {"models/player/group01/female_03.mdl"},
-    description = [[Освещение новостей города.
-Репортажи и интервью с гражданами.]],
-    weapons = {"weapon_camera"},
-    command = "journalist",
-    salary = 350,
-    admin = 0,
-    vote = false,
-    hasLicense = false,
-    category = "Другие",
-    PlayerModel = "models/player/group01/female_03.mdl"
-})
-
--- Remove default citizen job if needed
--- DarkRP.removeJob("Citizen")
-
-print("Aurora RP Jobs Configuration Loaded!")
+print("[Aurora RP] Jobs loaded successfully!")

@@ -1,5 +1,6 @@
-[General]
-title=Aurora RP
-author=Aurora Team
-description=DarkRP сервер с красивым меню, профессиями и атмосферным освещением
-version=1.0
+{
+	"title": "Aurora RP",
+	"type": "ServerContent",
+	"tags": [ "roleplay", "darkrp" ],
+	"ignore": []
+}

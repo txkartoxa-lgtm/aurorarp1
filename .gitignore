@@ -1,43 +1,76 @@
 ```
-# Compiled and build artifacts
+# Garry's Mod specific ignores
+data/
+downloads/
+lua/bin/
+*.psd
+*.blend
+*.xcf
+
+# General ignores
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+build/
+dist/
+target/
 *.o
 *.obj
 *.exe
 *.dll
 *.so
 *.a
-*.pyc
-__pycache__/
+*.out
 
-# Dependencies
-node_modules/
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
 venv/
 .venv/
-.env
-.env.local
-.env.*
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.gcda
+*.gcno
+htmlcov/
+.hypothesis/
+.mypy_cache/
+.pytest_cache/
+.__pycache__/
 
-# Build directories
-dist/
-build/
-target/
-*.tmp
+# Lua specific
+.luac
+.luacheckrc
 
-# Editor/IDE files
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
-*.log
-
-# System files
-.DS_Store
-Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
 
 # Compression
 *.zip
