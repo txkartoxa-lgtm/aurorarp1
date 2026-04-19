@@ -1,6 +1,5 @@
 {
 	"title": "Aurora RP",
 	"type": "ServerContent",
-	"tags": [ "roleplay", "darkrp" ],
-	"ignore": []
+	"tags": [ "roleplay", "darkrp" ]
 }

@@ -1,68 +1,65 @@
 -- Aurora RP - Third Person System
--- Smooth third person camera with V key toggle
+-- Toggle third person view with V key
 
-if not CLIENT then return end
+if CLIENT then
+    local thirdPersonEnabled = false
+    local thirdPersonDistance = 150
+    local thirdPersonHeight = 60
 
-AuroraRP.ThirdPerson = AuroraRP.ThirdPerson or {}
-AuroraRP.ThirdPerson.Enabled = AuroraRP.Config.DefaultThirdPerson or true
-AuroraRP.ThirdPerson.Distance = 150
-AuroraRP.ThirdPerson.Height = 60
-AuroraRP.ThirdPerson.Smoothness = 0.15
-
--- Toggle third person with V key
-hook.Add("Think", "AuroraRP_ThirdPersonToggle", function()
-    if input.IsKeyDown(KEY_V) then
-        if not AuroraRP.ThirdPerson.LastVPress or (CurTime() - AuroraRP.ThirdPerson.LastVPress) > 0.3 then
-            AuroraRP.ThirdPerson.Enabled = not AuroraRP.ThirdPerson.Enabled
-            AuroraRP.ThirdPerson.LastVPress = CurTime()
+    -- Toggle third person with V key
+    local lastKeyPress = 0
+    
+    hook.Add("Think", "AuroraRP_ThirdPersonToggle", function()
+        if input.IsKeyDown(KEY_V) and (CurTime() - lastKeyPress > 0.3) then
+            lastKeyPress = CurTime()
+            thirdPersonEnabled = not thirdPersonEnabled
             
-            local status = AuroraRP.ThirdPerson.Enabled and "enabled" or "disabled"
-            notification.AddLegacy("Third Person " .. status, NOTIFY_GENERIC, 2)
+            if thirdPersonEnabled then
+                print("[Aurora RP] Третье лицо включено")
+            else
+                print("[Aurora RP] Третье лицо выключено")
+            end
         end
-    end
-end)
+    end)
 
--- Override camera for third person
-hook.Add("CalcView", "AuroraRP_ThirdPersonCamera", function(ply, pos, angles, fov, zfar, znear)
-    if not AuroraRP.ThirdPerson.Enabled then return end
-    if not IsValid(ply) or ply ~= LocalPlayer() then return end
-    if not ply:Alive() then return end
-    
-    local view = {}
-    
-    -- Calculate camera position
-    local trace = {}
-    trace.start = pos
-    trace.endpos = pos - (angles:Forward() * AuroraRP.ThirdPerson.Distance) + Vector(0, 0, AuroraRP.ThirdPerson.Height)
-    trace.filter = ply
-    trace.mask = MASK_SOLID
-    
-    local tr = util.TraceLine(trace)
-    
-    view.origin = tr.HitPos
-    view.angles = angles
-    view.fov = fov
-    view.znear = znear
-    view.zfar = zfar
-    view.drawviewer = true
-    
-    return view
-end)
+    -- Calculate camera position for third person
+    hook.Add("CalcView", "AuroraRP_ThirdPersonCamera", function(ply, origin, angles, fov, znear, zfar)
+        if not thirdPersonEnabled then return end
+        
+        local targetOrigin = origin + Vector(0, 0, 30)
+        
+        -- Get the direction the player is looking
+        local forward = angles:Forward() * -thirdPersonDistance
+        local right = angles:Right() * 0
+        local up = angles:Up() * thirdPersonHeight
+        
+        -- Calculate camera position
+        local camPos = targetOrigin + forward + right + up
+        
+        -- Trace to avoid camera going through walls
+        local trace = util.QuickTrace(targetOrigin, camPos - targetOrigin, ply)
+        
+        if trace.Hit then
+            camPos = trace.HitPos + trace.HitNormal * 10
+        end
+        
+        local view = {}
+        view.origin = camPos
+        view.angles = angles
+        view.fov = fov
+        view.znear = znear
+        view.zfar = zfar
+        
+        return view
+    end)
 
--- Apply third person model rendering
-hook.Add("CalcViewModelView", "AuroraRP_ThirdPersonViewModel", function(vm, wep, pos, angles, fov, znear, zfar)
-    if not AuroraRP.ThirdPerson.Enabled then return end
-    
-    -- Hide view model in third person
-    return pos, angles
-end)
-
--- Make player model visible in third person
-hook.Add("PrePlayerDraw", "AuroraRP_DrawLocalPlayer", function(ply)
-    if AuroraRP.ThirdPerson.Enabled and ply == LocalPlayer() then
-        -- Player model is automatically drawn in third person
+    -- Hide player model in first person when in third person
+    hook.Add("ShouldDrawLocalPlayer", "AuroraRP_DrawLocalPlayer", function(ply)
+        if thirdPersonEnabled then
+            return true
+        end
         return false
-    end
-end)
+    end)
 
-print("[Aurora RP] Third person system loaded!")
+    print("[Aurora RP] Third person system loaded! Press V to toggle.")
+end
