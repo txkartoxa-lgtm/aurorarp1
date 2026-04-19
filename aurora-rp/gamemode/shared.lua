@@ -1,309 +1,213 @@
--- Aurora RP - Shared Functions
--- Door system, keys, and protection
+-- Aurora RP - Shared Door and Key System
+-- Works on both client and server
 
-if not DarkRP then return end
-
--- Network strings for door system
-util.AddNetworkString("AuroraRP_DoorKnock")
-util.AddNetworkString("AuroraRP_DoorAddOwner")
-util.AddNetworkString("AuroraRP_DoorRemoveOwner")
-
--- Client-side door commands
-if CLIENT then
-    net.Receive("AuroraRP_DoorKnockResponse", function()
-        local msg = net.ReadString()
-        chat.AddText(Color(255, 200, 50), "[Aurora RP] ", Color(255, 255, 255), msg)
-    end)
-    
-    net.Receive("AuroraRP_DoorOperationResult", function()
-        local success = net.ReadBool()
-        local msg = net.ReadString()
-        
-        if success then
-            notification.AddLegacy(msg, NOTIFY_GENERIC, 3)
-        else
-            notification.AddLegacy(msg, NOTIFY_ERROR, 3)
-        end
-    end)
-end
-
--- Server-side door handling
+-- Door purchase command
 if SERVER then
-    -- Door knocking system
-    net.Receive("AuroraRP_DoorKnock", function(len, ply)
-        local ent = net.ReadEntity()
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then return end
+    util.AddNetworkString("AuroraRP_BuyDoor")
+    util.AddNetworkString("AuroraRP_DoorStatus")
+    util.AddNetworkString("AuroraRP_KnockDoor")
+
+    -- Buy door command
+    concommand.Add("aurora_buydoor", function(ply, cmd, args)
+        if not IsValid(ply) then return end
         
-        local owners = ent:getKeys()
-        if #owners == 0 then
-            net.Start("AuroraRP_DoorKnockResponse")
-            net.WriteString("This door has no owner. You can buy it!")
-            net.Send(ply)
-            return
-        end
-        
-        -- Find online owners
-        local onlineOwners = {}
-        for _, owner in ipairs(owners) do
-            if IsValid(owner) and owner:IsPlayer() then
-                table.insert(onlineOwners, owner)
-            end
-        end
-        
-        if #onlineOwners > 0 then
-            -- Send knock message to owners
-            for _, owner in ipairs(onlineOwners) do
-                owner:ChatPrint("[Aurora RP] Someone is knocking at your door! (" .. ply:Nick() .. ")")
-            end
-            
-            net.Start("AuroraRP_DoorKnockResponse")
-            net.WriteString("You knocked on the door. Waiting for response...")
-            net.Send(ply)
-        else
-            net.Start("AuroraRP_DoorKnockResponse")
-            net.WriteString("No owners are online.")
-            net.Send(ply)
-        end
-    end)
-    
-    -- Add door owner
-    net.Receive("AuroraRP_DoorAddOwner", function(len, ply)
-        local ent = net.ReadEntity()
-        local target = net.ReadPlayer()
-        
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("Invalid door!")
-            net.Send(ply)
-            return
-        end
-        
-        if not IsValid(target) then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("Player not found!")
-            net.Send(ply)
-            return
-        end
-        
-        local owners = ent:getKeys()
-        local isOwner = false
-        for _, owner in ipairs(owners) do
-            if owner == ply then
-                isOwner = true
-                break
-            end
-        end
-        
-        if not isOwner then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("You are not the owner of this door!")
-            net.Send(ply)
-            return
-        end
-        
-        -- Check max doors
-        local currentDoors = 0
-        for _, door in ipairs(ents.FindByClass("prop_door_rotating")) do
-            local doorOwners = door:getKeys()
-            for _, owner in ipairs(doorOwners) do
-                if owner == target then
-                    currentDoors = currentDoors + 1
-                    break
-                end
-            end
-        end
-        
-        if currentDoors >= (AuroraRP.Config.MaxDoorsPerPlayer or 10) then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("Player has reached maximum door limit!")
-            net.Send(ply)
-            return
-        end
-        
-        -- Add owner
-        ent:addKeys(target)
-        
-        net.Start("AuroraRP_DoorOperationResult")
-        net.WriteBool(true)
-        net.WriteString("Added " .. target:Nick() .. " as door owner!")
-        net.Broadcast()
-    end)
-    
-    -- Remove door owner
-    net.Receive("AuroraRP_DoorRemoveOwner", function(len, ply)
-        local ent = net.ReadEntity()
-        local target = net.ReadPlayer()
-        
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("Invalid door!")
-            net.Send(ply)
-            return
-        end
-        
-        if not IsValid(target) then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("Player not found!")
-            net.Send(ply)
-            return
-        end
-        
-        local owners = ent:getKeys()
-        local isOwner = false
-        for _, owner in ipairs(owners) do
-            if owner == ply then
-                isOwner = true
-                break
-            end
-        end
-        
-        if not isOwner then
-            net.Start("AuroraRP_DoorOperationResult")
-            net.WriteBool(false)
-            net.WriteString("You are not the owner of this door!")
-            net.Send(ply)
-            return
-        end
-        
-        -- Remove owner
-        ent:removeKeys(target)
-        
-        net.Start("AuroraRP_DoorOperationResult")
-        net.WriteBool(true)
-        net.WriteString("Removed " .. target:Nick() .. " from door owners!")
-        net.Broadcast()
-    end)
-    
-    -- Prevent physgun abuse
-    hook.Add("PhysgunPickup", "AuroraRP_PhysgunRestriction", function(ply, ent)
-        -- Prevent picking up other players' doors
-        if ent:GetClass() == "prop_door_rotating" then
-            local owners = ent:getKeys()
-            if #owners > 0 then
-                local isOwner = false
-                for _, owner in ipairs(owners) do
-                    if owner == ply then
-                        isOwner = true
-                        break
-                    end
-                end
-                if not isOwner then
-                    ply:ChatPrint("[Aurora RP] You cannot pick up doors you don't own!")
-                    return false
-                end
-            end
-        end
-        
-        -- Prevent picking up players
-        if ent:IsPlayer() then
-            return false
-        end
-        
-        return true
-    end)
-    
-    -- Prevent toolgun abuse on doors
-    hook.Add("CanTool", "AuroraRP_ToolgunRestriction", function(ply, trace, tool)
+        local trace = ply:GetEyeTrace()
         local ent = trace.Entity
-        if IsValid(ent) and ent:GetClass() == "prop_door_rotating" then
-            local owners = ent:getKeys()
-            if #owners > 0 then
-                local isOwner = false
-                for _, owner in ipairs(owners) do
-                    if owner == ply then
-                        isOwner = true
-                        break
-                    end
-                end
-                if not isOwner and tool ~= "remover" then
-                    ply:ChatPrint("[Aurora RP] You cannot modify doors you don't own!")
-                    return false
-                end
-            end
+        
+        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
+            DarkRP.notify(ply, 1, 3, "Смотрите на дверь!")
+            return
         end
-        return true
+        
+        -- Check if door already has an owner
+        local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+        if owner then
+            DarkRP.notify(ply, 1, 3, "Эта дверь уже куплена!")
+            return
+        end
+        
+        -- Check money
+        local money = ply:getDarkRPVar("money") or 0
+        local doorPrice = AuroraRP.Config.DoorPrice or 500
+        
+        if money < doorPrice then
+            DarkRP.notify(ply, 1, 3, "Недостаточно денег! Нужно $" .. doorPrice)
+            return
+        end
+        
+        -- Purchase door
+        ply:setDarkRPVar("money", money - doorPrice)
+        ent:SetNWEntity("AuroraDoorOwner", ply)
+        ent:SetNWString("AuroraDoorCoOwners", "")
+        
+        DarkRP.notify(ply, 0, 3, "Дверь успешно куплена за $" .. doorPrice .. "!")
+        
+        -- Send status to all clients
+        net.Start("AuroraRP_DoorStatus")
+            net.WriteEntity(ent)
+            net.WriteEntity(ply)
+            net.WriteString("buy")
+        net.Broadcast()
+    end)
+
+    -- Add owner command
+    concommand.Add("aurora_addowner", function(ply, cmd, args)
+        if not IsValid(ply) then return end
+        
+        local trace = ply:GetEyeTrace()
+        local ent = trace.Entity
+        
+        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
+            DarkRP.notify(ply, 1, 3, "Смотрите на дверь!")
+            return
+        end
+        
+        local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+        if owner ~= ply then
+            DarkRP.notify(ply, 1, 3, "Это не ваша дверь!")
+            return
+        end
+        
+        if not args[1] then
+            DarkRP.notify(ply, 1, 3, "Использование: !addowner <имя игрока>")
+            return
+        end
+        
+        local targetName = table.concat(args, " ")
+        local target = DarkRP.findPlayer(targetName)
+        
+        if not target then
+            DarkRP.notify(ply, 1, 3, "Игрок не найден!")
+            return
+        end
+        
+        local coOwners = ent:GetNWString("AuroraDoorCoOwners", "")
+        if string.find(coOwners, target:SteamID()) then
+            DarkRP.notify(ply, 1, 3, "Этот игрок уже является владельцем!")
+            return
+        end
+        
+        ent:SetNWString("AuroraDoorCoOwners", coOwners .. target:SteamID() .. ",")
+        DarkRP.notify(ply, 0, 3, target:Nick() .. " добавлен как совладелец двери!")
+        DarkRP.notify(target, 0, 3, ply:Nick() .. " добавил вас как совладельца двери!")
+    end)
+
+    -- Remove owner command
+    concommand.Add("aurora_removeowner", function(ply, cmd, args)
+        if not IsValid(ply) then return end
+        
+        local trace = ply:GetEyeTrace()
+        local ent = trace.Entity
+        
+        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
+            DarkRP.notify(ply, 1, 3, "Смотрите на дверь!")
+            return
+        end
+        
+        local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+        if owner ~= ply then
+            DarkRP.notify(ply, 1, 3, "Это не ваша дверь!")
+            return
+        end
+        
+        if not args[1] then
+            DarkRP.notify(ply, 1, 3, "Использование: !removeowner <имя игрока>")
+            return
+        end
+        
+        local targetName = table.concat(args, " ")
+        local target = DarkRP.findPlayer(targetName)
+        
+        if not target then
+            DarkRP.notify(ply, 1, 3, "Игрок не найден!")
+            return
+        end
+        
+        local coOwners = ent:GetNWString("AuroraDoorCoOwners", "")
+        local newCoOwners = string.gsub(coOwners, target:SteamID() .. ",", "")
+        ent:SetNWString("AuroraDoorCoOwners", newCoOwners)
+        
+        DarkRP.notify(ply, 0, 3, target:Nick() .. " удалён из владельцев двери!")
+        DarkRP.notify(target, 1, 3, ply:Nick() .. " удалил вас из владельцев двери!")
+    end)
+
+    -- Knock on door
+    concommand.Add("aurora_knock", function(ply, cmd, args)
+        if not IsValid(ply) then return end
+        
+        local trace = ply:GetEyeTrace()
+        local ent = trace.Entity
+        
+        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
+            DarkRP.notify(ply, 1, 3, "Смотрите на дверь!")
+            return
+        end
+        
+        local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+        if not owner then
+            DarkRP.notify(ply, 1, 3, "У этой двери нет владельца!")
+            return
+        end
+        
+        -- Notify the owner
+        DarkRP.notify(owner, 0, 3, ply:Nick() .. " стучится в вашу дверь!")
+        
+        -- Play knock sound
+        ent:EmitSound("physics/wood/wood_solid_impact_hard2.wav")
     end)
 end
 
--- Chat commands for door management
-hook.Add("PlayerSay", "AuroraRP_DoorCommands", function(ply, text)
-    local cmd = string.lower(text)
-    local trace = ply:GetEyeTrace()
-    local ent = trace.Entity
-    
-    if cmd == "!knock" or cmd == "/knock" then
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
-            ply:ChatPrint("[Aurora RP] Look at a door to knock!")
-            return ""
+-- Client-side door system
+if CLIENT then
+    net.Receive("AuroraRP_DoorStatus", function()
+        local ent = net.ReadEntity()
+        local owner = net.ReadEntity()
+        local action = net.ReadString()
+        
+        if IsValid(ent) then
+            if action == "buy" then
+                -- Show notification
+                notification.AddLegacy("Дверь куплена!", NOTIFY_GENERIC, 3)
+            end
         end
-        
-        net.Start("AuroraRP_DoorKnock")
-        net.WriteEntity(ent)
-        net.SendToServer()
-        return ""
-    end
-    
-    if string.find(cmd, "!addowner") or string.find(cmd, "/addowner") then
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
-            ply:ChatPrint("[Aurora RP] Look at a door to add an owner!")
-            return ""
-        end
-        
-        local targetName = string.gsub(text, "!addowner", "")
-        targetName = string.gsub(targetName, "/addowner", "")
-        targetName = string.trim(targetName)
-        
-        if targetName == "" then
-            ply:ChatPrint("[Aurora RP] Usage: !addowner <player name>")
-            return ""
-        end
-        
-        local target = player.GetByName(targetName)
-        if not IsValid(target) then
-            ply:ChatPrint("[Aurora RP] Player not found!")
-            return ""
-        end
-        
-        net.Start("AuroraRP_DoorAddOwner")
-        net.WriteEntity(ent)
-        net.WritePlayer(target)
-        net.SendToServer()
-        return ""
-    end
-    
-    if string.find(cmd, "!removeowner") or string.find(cmd, "/removeowner") then
-        if not IsValid(ent) or ent:GetClass() ~= "prop_door_rotating" then
-            ply:ChatPrint("[Aurora RP] Look at a door to remove an owner!")
-            return ""
-        end
-        
-        local targetName = string.gsub(text, "!removeowner", "")
-        targetName = string.gsub(targetName, "/removeowner", "")
-        targetName = string.trim(targetName)
-        
-        if targetName == "" then
-            ply:ChatPrint("[Aurora RP] Usage: !removeowner <player name>")
-            return ""
-        end
-        
-        local target = player.GetByName(targetName)
-        if not IsValid(target) then
-            ply:ChatPrint("[Aurora RP] Player not found!")
-            return ""
-        end
-        
-        net.Start("AuroraRP_DoorRemoveOwner")
-        net.WriteEntity(ent)
-        net.WritePlayer(target)
-        net.SendToServer()
-        return ""
-    end
-end)
+    end)
 
-print("[Aurora RP] Door system loaded!")
+    -- E key to interact with doors
+    hook.Add("PlayerBindPress", "AuroraRP_DoorInteraction", function(ply, bind, pressed)
+        if not pressed then return end
+        
+        if bind == "+use" then
+            local trace = ply:GetEyeTrace()
+            local ent = trace.Entity
+            
+            if IsValid(ent) and ent:GetClass() == "prop_door_rotating" then
+                local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+                
+                if not owner then
+                    -- Prompt to buy
+                    chat.AddText(Color(138, 43, 226), "[Aurora RP] ", Color(255, 255, 255), 
+                        "Нажмите F4 чтобы купить эту дверь за $", AuroraRP.Config.DoorPrice or 500)
+                end
+            end
+        end
+    end)
+
+    -- F4 to buy door
+    hook.Add("Think", "AuroraRP_BuyDoorKey", function()
+        if input.IsKeyDown(KEY_F4) then
+            local ply = LocalPlayer()
+            local trace = ply:GetEyeTrace()
+            local ent = trace.Entity
+            
+            if IsValid(ent) and ent:GetClass() == "prop_door_rotating" then
+                local owner = ent:GetNWEntity("AuroraDoorOwner", nil)
+                
+                if not owner then
+                    RunConsoleCommand("aurora_buydoor")
+                end
+            end
+        end
+    end)
+end
+
+print("[Aurora RP] Door and key system loaded!")

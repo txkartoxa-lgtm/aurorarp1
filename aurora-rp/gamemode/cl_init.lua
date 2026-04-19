@@ -1,12 +1,12 @@
 -- Aurora RP - Client Initialization
-if not DarkRP then return end
+-- Loads all client-side modules
 
-AuroraRP = AuroraRP or {}
+if CLIENT then
+    include("cl_hud.lua")
+    include("cl_jobs_menu.lua")
+    include("cl_donate_menu.lua")
+    include("cl_thirdperson.lua")
+    include("shared.lua")
 
--- Include client files
-include("cl_hud.lua")
-include("cl_jobs_menu.lua")
-include("cl_donate_menu.lua")
-include("cl_thirdperson.lua")
-
-print("[Aurora RP] Client files loaded!")
+    print("[Aurora RP] Client initialization complete!")
+end

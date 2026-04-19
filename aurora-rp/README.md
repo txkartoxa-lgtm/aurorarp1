@@ -1,166 +1,115 @@
-# Aurora RP - DarkRP Server Addon
+# Aurora RP - DarkRP Server
 
-## 🌟 Features
+## 📦 Установка
 
-### HUD Interface
-- **Top Right**: Server name "AURORA RP" with real-time clock
-- **Bottom Left**: Health, Armor, Hunger, and Money display with progress bars
-- Voice chat indicators above speaking players
+1. **Скачайте карту**: 
+   - Перейдите на https://steamcommunity.com/sharedfiles/filedetails/?id=1527403485
+   - Подпишитесь и скачайте карту `rp_downtown_tits_v2`
 
-### Profession System (F2)
-Beautiful menu with job categories:
-- Law Enforcement (Police Chief, Police Officer)
-- Medical (Medic)
-- Emergency (Fire Chief, Fire Fighter)
-- Services (Taxi Driver, Banker)
-- Special (Gun Dealer)
+2. **Установите аддон**:
+   - Скопируйте папку `aurora-rp` в `garrysmod/addons/`
+   - Путь: `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\garrysmod\addons\aurora-rp\`
 
-Each job has custom models, weapons, salary, and descriptions.
+3. **Требования**:
+   - Установленный **DarkRP** (обязательно!)
+   - Карта `rp_downtown_tits_v2`
 
-### Donate Shop (F3)
-Ready-to-customize donation menu with categories:
-- VIP Status (Basic, Premium, Elite)
-- Money Packs
-- Weapon Packs
-- Vehicles
-- Pets
+4. **Запуск сервера**:
+   - Запустите Garry's Mod
+   - Создайте сервер с картой `rp_downtown_tits_v2`
+   - Выберите гейммод **DarkRP**
 
-### Third Person Camera
-- Press **V** to toggle third person view
-- Smooth camera movement
-- Enabled by default
-- Configurable distance and height
+## 🎮 Управление
 
-### Door & Key System
-- Buy doors legitimately
-- Add/remove owners with commands:
-  - `!addowner <player name>` - Add friend as owner
-  - `!removeowner <player name>` - Remove owner
-  - `!knock` - Knock on door
-- Only owners can open/close doors
-- Protection against door stealing
-- Physgun and toolgun restrictions
+| Клавиша | Действие |
+|---------|----------|
+| **F2** | Меню профессий |
+| **F3** | Донат магазин |
+| **F4** | Купить дверь |
+| **V** | Третье лицо (вкл/выкл) |
+| **E** | Взаимодействие |
+| **!knock** | Постучаться в дверь |
+| **!addowner <имя>** | Добавить совладельца двери |
+| **!removeowner <имя>** | Удалить совладельца двери |
 
-### Voice Chat
-- Proximity-based voice chat
-- Visual microphone indicators
-- Works with GMod's built-in voice system
+## ✨ Возможности
 
-### Safety Features
-- No door theft prevention
-- Safe physgun usage (no explosions)
-- Toolgun restrictions on other players' property
-- Cannot pickup other players
+### HUD Интерфейс
+- ⏰ Время и дата в верхнем правом углу
+- ❤️ Здоровье, броня, голод, деньги в нижнем левом углу
+- 🎨 Стильный дизайн в цветах Aurora
 
-## 📁 Installation
+### Профессии (F2)
+- **Службы порядка**: Полицейский, Шериф
+- **Медицина**: Врач, Хирург
+- **Транспорт**: Таксист, Водитель автобуса
+- **Бизнес**: Продавец, Банкир
+- **Рабочие**: Шахтёр, Строитель
+- **Другие**: Журналист
 
-1. **Download the map**: 
-   - Get `rp_downtown_tits_v2` from: https://steamcommunity.com/sharedfiles/filedetails/?id=1527403485
-   - Or subscribe to it on Steam Workshop
+### Донат магазин (F3)
+- VIP статусы (Basic, Premium, Elite)
+- Игровые деньги
+- Оружие
+- Транспорт
+- Питомцы
+- Разное
 
-2. **Install the addon**:
-   ```
-   Copy the aurora-rp folder to:
-   garrysmod/addons/aurora-rp/
-   ```
+### Система дверей
+- Покупка дверей (F4)
+- Добавление/удаление совладельцев
+- Стук в дверь (!knock)
+- Защита от воровства
 
-3. **Required Dependencies**:
-   - DarkRP gamemode (must be installed)
-   - Map: rp_downtown_tits_v2
+### Третье лицо
+- Переключение клавишей **V**
+- Плавная камера
+- Автоматическое избегание стен
 
-4. **Start the server**:
-   - Launch Garry's Mod
-   - Create server with map `rp_downtown_tits_v2`
-   - Make sure DarkRP is the active gamemode
+### Голосовой чат
+- Проксимити-чат (слышно на расстоянии)
+- Визуальные индикаторы 🎤
 
-## ⌨️ Controls
+### Безопасные инструменты
+- Физ-пушка без разрушений
+- Грави-пушка безопасна
+- Тулган работает корректно
 
-| Key | Action |
-|-----|--------|
-| F2 | Open Jobs Menu |
-| F3 | Open Donate Shop |
-| V | Toggle Third Person |
-| E | Interact with doors |
-| !knock | Knock on door (chat command) |
-| !addowner \<name\> | Add door owner |
-| !removeowner \<name\> | Remove door owner |
+## ⚙️ Настройка
 
-## ⚙️ Configuration
+### Изменение конфигурации
+Откройте файл `lua/autorun/sh_config.lua` для настройки:
+- Стартовые деньги
+- Дистанция голосового чата
+- Цена дверей
+- Максимум дверей на игрока
 
-Edit `lua/autorun/sh_config.lua` to customize:
+### Добавление товаров в донат магазин
+Откройте файл `gamemode/cl_donate_menu.lua` и отредактируйте таблицу `donateItems`.
 
-```lua
-AuroraRP.Config.ServerName = "Aurora RP"
-AuroraRP.Config.StartingMoney = 5000
-AuroraRP.Config.StartingHealth = 100
-AuroraRP.Config.StartingArmor = 0
-AuroraRP.Config.StartingHunger = 100
-AuroraRP.Config.VoiceDistance = 400
-AuroraRP.Config.MaxDoorsPerPlayer = 10
-AuroraRP.Config.DoorPrice = 500
-AuroraRP.Config.DefaultThirdPerson = true
+## 🔧 Команды консоли
+
+```
+aurora_buydoor          - Купить дверь (смотря на неё)
+aurora_addowner <имя>   - Добавить совладельца
+aurora_removeowner <имя>- Удалить совладельца
+aurora_knock            - Постучаться в дверь
+job <название>          - Сменить профессию
 ```
 
-## 🎨 Customization
+## 📝 Примечания
 
-### Adding New Jobs
-Edit `lua/autorun/server/sv_jobs.lua` and use:
-```lua
-DarkRP.createJob("Job Name", {
-    color = Color(r, g, b),
-    model = {"models/player/model.mdl"},
-    description = [[Description text]],
-    weapons = {"weapon_name"},
-    command = "jobcommand",
-    max = 5,
-    salary = GAMEMODE.Config.normalsalary * 1.5,
-    admin = 0,
-    vote = false,
-    hasLicense = false,
-    category = "Category Name"
-})
-```
+- Сервер требует установленный **DarkRP** гейммод
+- Все профессии настраиваются в `lua/autorun/server/sv_jobs.lua`
+- Для изменения цен на двери отредактируйте `lua/autorun/sh_config.lua`
 
-### Customizing Donate Items
-Edit `gamemode/cl_donate_menu.lua` and modify the `donateItems` table.
+## 🆘 Поддержка
 
-### Changing HUD Colors
-Edit `gamemode/cl_hud.lua` and modify the `hudColors` table.
-
-## 🐛 Troubleshooting
-
-**No jobs showing?**
-- Make sure DarkRP is properly installed
-- Check console for errors
-
-**HUD not appearing?**
-- Verify all client files are loading
-- Check for Lua errors in console
-
-**Third person not working?**
-- Press V to toggle
-- Check if DefaultThirdPerson is enabled in config
-
-**Door commands not working?**
-- Look directly at a door when using commands
-- Make sure you're the owner to add/remove owners
-
-## 📝 Notes
-
-- This addon extends DarkRP, it does NOT replace it
-- All features work alongside standard DarkRP mechanics
-- Donation store link needs to be configured by server owner
-- For best experience, use with atmospheric lighting mods
-
-## 💬 Support
-
-For issues or questions:
-1. Check console for error messages
-2. Verify all files are in correct locations
-3. Ensure DarkRP is installed and working
-4. Test on a local server first
+Если возникли проблемы:
+1. Убедитесь что DarkRP установлен
+2. Проверьте что карта загружена
+3. Посмотрите консоль на ошибки
 
 ---
 
-**Made for Aurora RP** 🌅
-Enjoy your roleplay experience!
+**Aurora RP** © 2024 - Приятной игры!
