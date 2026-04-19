@@ -1,197 +1,192 @@
--- Aurora RP - Jobs Menu
--- Beautiful profession selection menu with realistic roles
+-- Aurora RP - Jobs Menu (F2)
+-- Beautiful profession selection menu
 
-local jobCategories = {
-    ["Службы порядка"] = {
-        {name = "Полицейский", model = "models/player/police.mdl", salary = 500, armor = 100, weapons = {"weapon_pistol", "weapon_stunstick"}, description = "Защита порядка и безопасности города"},
-        {name = "Шериф", model = "models/player/police.mdl", salary = 700, armor = 100, weapons = {"weapon_pistol", "weapon_smg1"}, description = "Глава полицейского департамента"},
-        {name = "SWAT", model = "models/player/swat.mdl", salary = 600, armor = 150, weapons = {"weapon_ar2", "weapon_pistol"}, description = "Спецназ для особых операций"}
-    },
-    ["Медицина"] = {
-        {name = "Врач", model = "models/player/group03/female_02.mdl", salary = 450, armor = 50, weapons = {"weapon_medkit"}, description = "Лечение раненых граждан"},
-        {name = "Хирург", model = "models/player/group03/male_02.mdl", salary = 650, armor = 50, weapons = {"weapon_medkit"}, description = "Проведение сложных операций"}
-    },
-    ["Транспорт"] = {
-        {name = "Таксист", model = "models/player/eli.mdl", salary = 350, armor = 0, weapons = {}, description = "Перевозка пассажиров по городу"},
-        {name = "Водитель автобуса", model = "models/player/barney.mdl", salary = 300, armor = 0, weapons = {}, description = "Общественный транспорт"},
-        {name = "Дальнобойщик", model = "models/player/breen.mdl", salary = 400, armor = 0, weapons = {}, description = "Грузоперевозки на дальние расстояния"}
-    },
-    ["Бизнес"] = {
-        {name = "Продавец", model = "models/player/group01/female_01.mdl", salary = 250, armor = 0, weapons = {}, description = "Работа в магазине"},
-        {name = "Менеджер", model = "models/player/group01/male_01.mdl", salary = 500, armor = 0, weapons = {}, description = "Управление бизнесом"},
-        {name = "Банкир", model = "models/player/gman_high.mdl", salary = 800, armor = 0, weapons = {}, description = "Работа в банке"}
-    },
-    ["Рабочие"] = {
-        {name = "Шахтёр", model = "models/player/group03/male_04.mdl", salary = 300, armor = 25, weapons = {"weapon_crowbar"}, description = "Добыча ресурсов"},
-        {name = "Строитель", model = "models/player/group03/male_03.mdl", salary = 350, armor = 25, weapons = {"weapon_crowbar"}, description = "Строительство зданий"},
-        {name = "Электрик", model = "models/player/group03/male_05.mdl", salary = 400, armor = 25, weapons = {"weapon_tool"}, description = "Ремонт электропроводки"}
-    },
-    ["Другие"] = {
-        {name = "Гражданин", model = "models/player/group01/female_02.mdl", salary = 200, armor = 0, weapons = {}, description = "Обычный гражданин"},
-        {name = "Безработный", model = "models/player/group01/male_02.mdl", salary = 100, armor = 0, weapons = {}, description = "Поиск работы"},
-        {name = "Журналист", model = "models/player/group01/female_03.mdl", salary = 350, armor = 0, weapons = {"weapon_camera"}, description = "Освещение новостей города"}
-    }
+if not CLIENT then return end
+
+local jobsMenu = nil
+local jobsMenuOpen = false
+
+local categories = {
+    "Law Enforcement",
+    "Medical",
+    "Emergency",
+    "Services",
+    "Special"
 }
 
-local jobMenu = nil
-local selectedCategory = 1
-local selectedJob = 1
+local categoryColors = {
+    ["Law Enforcement"] = Color(50, 50, 200),
+    ["Medical"] = Color(200, 50, 50),
+    ["Emergency"] = Color(200, 100, 0),
+    ["Services"] = Color(0, 150, 0),
+    ["Special"] = Color(100, 100, 100)
+}
 
-function OpenAuroraJobMenu()
-    if IsValid(jobMenu) then
-        jobMenu:Remove()
-    end
+local function createJobsMenu()
+    if IsValid(jobsMenu) then jobsMenu:Remove() end
     
-    jobMenu = vgui.Create("DFrame")
-    jobMenu:SetSize(900, 600)
-    jobMenu:Center()
-    jobMenu:SetTitle("")
-    jobMenu:SetVisible(true)
-    jobMenu:SetDraggable(true)
-    jobMenu:ShowCloseButton(true)
-    jobMenu:MakePopup()
+    jobsMenu = vgui.Create("DFrame")
+    jobsMenu:SetSize(800, 600)
+    jobsMenu:Center()
+    jobsMenu:SetTitle("")
+    jobsMenu:SetVisible(false)
+    jobsMenu:SetDraggable(true)
+    jobsMenu:ShowCloseButton(true)
+    jobsMenu:MakePopup()
     
     -- Custom title bar
-    jobMenu.Paint = function(self, w, h)
-        draw.RoundedBoxEx(15, 0, 0, w, h, Color(20, 20, 30, 240), true, true, true, true)
+    jobsMenu.Paint = function(self, w, h)
+        draw.RoundedBox(8, 0, 0, w, h, Color(20, 20, 40, 230))
+        draw.RoundedBox(8, 0, 0, w, 50, Color(138, 43, 226, 200))
         
-        -- Aurora gradient
-        local gradient = surface.GetTextureID("gui/gradient_down")
-        surface.SetTexture(gradient)
-        surface.SetDrawColor(138, 43, 226, 100)
-        surface.DrawTexturedRect(0, 0, w, 80)
-        
-        -- Title
-        draw.SimpleText("AURORA RP", "DermaLarge", w/2, 20, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-        draw.SimpleText("МЕНЮ ПРОФЕССИЙ", "DermaDefault", w/2, 55, Color(200, 200, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        draw.SimpleText("AURORA RP - PROFESSIONS", "DermaExtraLarge", w/2, 15, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        draw.SimpleText("Choose your role in the city", "DermaDefault", w/2, 40, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
     end
     
-    -- Categories panel (left side)
-    local categoriesPanel = vgui.Create("DPanel", jobMenu)
-    categoriesPanel:SetPos(20, 90)
-    categoriesPanel:SetSize(200, 490)
-    categoriesPanel.Paint = function(self, w, h)
-        draw.RoundedBox(10, 0, 0, w, h, Color(30, 30, 45, 200))
+    -- Category selector
+    local categoryPanel = vgui.Create("DPanel", jobsMenu)
+    categoryPanel:SetPos(10, 60)
+    categoryPanel:SetSize(180, 530)
+    categoryPanel.Paint = function(self, w, h)
+        draw.RoundedBox(4, 0, 0, w, h, Color(30, 30, 50, 200))
     end
     
-    -- Jobs panel (right side)
-    local jobsPanel = vgui.Create("DPanel", jobMenu)
-    jobsPanel:SetPos(240, 90)
-    jobsPanel:SetSize(640, 490)
-    jobsPanel.Paint = function(self, w, h)
-        draw.RoundedBox(10, 0, 0, w, h, Color(30, 30, 45, 200))
-    end
+    local scrollPanel = vgui.Create("DScrollPanel", jobsMenu)
+    scrollPanel:SetPos(200, 60)
+    scrollPanel:SetSize(590, 530)
+    scrollPanel:GetCanvas():DockPadding(10, 10, 10, 10)
     
-    -- Category buttons
-    local categoryY = 10
-    for catIndex, categoryName in ipairs(table.GetKeys(jobCategories)) do
-        local catButton = vgui.Create("DButton", categoriesPanel)
-        catButton:SetSize(180, 40)
-        catButton:SetPos(10, categoryY)
-        catButton:SetText(categoryName)
-        catButton:SetFont("DermaDefault")
+    local selectedCategory = "All"
+    
+    local function updateJobsList()
+        scrollPanel:Clear()
         
-        catButton.Paint = function(self, w, h)
-            if selectedCategory == catIndex then
-                draw.RoundedBox(8, 0, 0, w, h, Color(138, 43, 226, 200))
-            else
-                draw.RoundedBox(8, 0, 0, w, h, Color(50, 50, 70, 150))
+        local jobs = {}
+        for _, job in ipairs(DarkRP.getJobs()) do
+            if selectedCategory == "All" or job.category == selectedCategory then
+                table.insert(jobs, job)
             end
         end
         
-        catButton.DoClick = function()
-            selectedCategory = catIndex
-            UpdateJobsList()
-        end
-        
-        categoryY = categoryY + 50
-    end
-    
-    -- Jobs list
-    local jobList = vgui.Create("DScrollPanel", jobsPanel)
-    jobList:SetSize(620, 470)
-    jobList:SetPos(10, 10)
-    
-    function UpdateJobsList()
-        jobList:Clear()
-        
-        local currentCategory = table.GetKeys(jobCategories)[selectedCategory]
-        local jobs = jobCategories[currentCategory]
-        
-        local jobY = 0
-        for jobIndex, job in ipairs(jobs) do
-            local jobPanel = vgui.Create("DPanel", jobList)
-            jobPanel:SetSize(600, 100)
-            jobPanel:SetPos(10, jobY)
+        local yPos = 0
+        for _, job in ipairs(jobs) do
+            local jobCard = vgui.Create("DPanel", scrollPanel)
+            jobCard:SetSize(560, 100)
+            jobCard:SetPos(0, yPos)
             
-            jobPanel.Paint = function(self, w, h)
-                if selectedJob == jobIndex then
-                    draw.RoundedBox(8, 0, 0, w, h, Color(138, 43, 226, 150))
-                else
-                    draw.RoundedBox(8, 0, 0, w, h, Color(50, 50, 70, 100))
-                end
+            local catColor = categoryColors[job.category] or Color(100, 100, 100)
+            
+            jobCard.Paint = function(self, w, h)
+                draw.RoundedBox(4, 0, 0, w, h, Color(40, 40, 60, 200))
+                draw.RoundedBox(4, 0, 0, 5, h, catColor)
             end
             
-            -- Job info
-            local nameLabel = vgui.Create("DLabel", jobPanel)
-            nameLabel:SetPos(120, 10)
-            nameLabel:SetSize(300, 25)
+            -- Job name
+            local nameLabel = vgui.Create("DLabel", jobCard)
             nameLabel:SetText(job.name)
             nameLabel:SetFont("DermaLarge")
-            nameLabel:SetTextColor(Color(255, 255, 255))
+            nameLabel:SetTextColor(catColor)
+            nameLabel:SetPos(10, 10)
+            nameLabel:SizeToContents()
             
-            local descLabel = vgui.Create("DLabel", jobPanel)
-            descLabel:SetPos(120, 35)
-            descLabel:SetSize(300, 20)
+            -- Job description
+            local descLabel = vgui.Create("DLabel", jobCard)
             descLabel:SetText(job.description)
             descLabel:SetFont("DermaDefault")
             descLabel:SetTextColor(Color(200, 200, 200))
+            descLabel:SetPos(10, 35)
+            descLabel:SetSize(400, 40)
+            descLabel:SetWrap(true)
             
-            local salaryLabel = vgui.Create("DLabel", jobPanel)
-            salaryLabel:SetPos(120, 60)
-            salaryLabel:SetSize(200, 20)
-            salaryLabel:SetText("Зарплата: " .. DarkRP.formatMoney(job.salary))
-            salaryLabel:SetFont("DermaDefault")
-            salaryLabel:SetTextColor(Color(50, 205, 50))
+            -- Salary
+            local salaryLabel = vgui.Create("DLabel", jobCard)
+            salaryLabel:SetText("Salary: $" .. (job.salary or 0) .. "/hour")
+            salaryLabel:SetFont("DermaDefaultBold")
+            salaryLabel:SetTextColor(Color(100, 255, 100))
+            salaryLabel:SetPos(10, 70)
+            salaryLabel:SizeToContents()
             
-            local armorLabel = vgui.Create("DLabel", jobPanel)
-            armorLabel:SetPos(120, 80)
-            armorLabel:SetSize(200, 15)
-            armorLabel:SetText("Броня: " .. job.armor)
-            armorLabel:SetFont("DermaSmall")
-            armorLabel:SetTextColor(Color(64, 158, 255))
+            -- Join button
+            local joinBtn = vgui.Create("DButton", jobCard)
+            joinBtn:SetText("JOIN")
+            joinBtn:SetPos(450, 30)
+            joinBtn:SetSize(100, 40)
+            joinBtn:SetFont("DermaDefaultBold")
             
-            -- Select button
-            local selectButton = vgui.Create("DButton", jobPanel)
-            selectButton:SetPos(450, 30)
-            selectButton:SetSize(140, 40)
-            selectButton:SetText("ВЫБРАТЬ")
-            selectButton:SetFont("DermaDefault")
-            
-            selectButton.Paint = function(self, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, Color(50, 205, 50, 200))
+            joinBtn.Paint = function(self, w, h)
+                draw.RoundedBox(4, 0, 0, w, h, catColor)
+                if self:IsHovered() then
+                    draw.RoundedBox(4, 0, 0, w, h, Color(catColor.r + 30, catColor.g + 30, catColor.b + 30))
+                end
             end
             
-            selectButton.DoClick = function()
-                RunConsoleCommand("say", "!job " .. job.name)
-                notification.AddLegacy("Вы выбрали профессию: " .. job.name, NOTIFY_GENERIC, 5)
-                jobMenu:Remove()
+            joinBtn.DoClick = function()
+                RunCommand("say /job " .. job.command)
+                jobsMenu:Close()
             end
             
-            jobY = jobY + 110
+            yPos = yPos + 110
         end
+        
+        scrollPanel:SetCanvasSize(570, yPos)
     end
     
-    UpdateJobsList()
+    -- Category buttons
+    local btnY = 10
+    local allBtn = vgui.Create("DButton", categoryPanel)
+    allBtn:SetText("All Jobs")
+    allBtn:SetPos(10, btnY)
+    allBtn:SetSize(160, 40)
+    allBtn:SetFont("DermaDefaultBold")
+    allBtn.Paint = function(self, w, h)
+        local color = selectedCategory == "All" and Color(138, 43, 226) or Color(50, 50, 80)
+        draw.RoundedBox(4, 0, 0, w, h, color)
+    end
+    allBtn.DoClick = function()
+        selectedCategory = "All"
+        updateJobsList()
+    end
+    btnY = btnY + 50
+    
+    for _, cat in ipairs(categories) do
+        local catBtn = vgui.Create("DButton", categoryPanel)
+        catBtn:SetText(cat)
+        catBtn:SetPos(10, btnY)
+        catBtn:SetSize(160, 40)
+        catBtn:SetFont("DermaDefaultBold")
+        
+        local catColor = categoryColors[cat] or Color(100, 100, 100)
+        catBtn.Paint = function(self, w, h)
+            local color = selectedCategory == cat and catColor or Color(50, 50, 80)
+            draw.RoundedBox(4, 0, 0, w, h, color)
+        end
+        
+        catBtn.DoClick = function()
+            selectedCategory = cat
+            updateJobsList()
+        end
+        
+        btnY = btnY + 50
+    end
+    
+    -- Initial population
+    updateJobsList()
 end
 
--- Bind key to open job menu (F2 by default)
-hook.Add("Think", "AuroraRP_JobMenuBind", function()
-    if input.IsKeyDown(KEY_F2) then
-        if not jobMenu or not IsValid(jobMenu) then
-            OpenAuroraJobMenu()
+-- F2 to open jobs menu
+hook.Add("HUDPaint", "AuroraRP_JobsMenuKey", function()
+    if input.IsKeyDown(KEY_F2) and not jobsMenuOpen then
+        jobsMenuOpen = true
+        if not IsValid(jobsMenu) then
+            createJobsMenu()
         end
+        jobsMenu:SetVisible(true)
+        jobsMenu:MakePopup()
+    end
+    
+    if not input.IsKeyDown(KEY_F2) then
+        jobsMenuOpen = false
     end
 end)
 
-print("Aurora RP Jobs Menu Loaded!")
+print("[Aurora RP] Jobs menu loaded!")

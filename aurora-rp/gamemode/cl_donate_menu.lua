@@ -1,213 +1,206 @@
--- Aurora RP - Donate Menu
--- Beautiful donation shop menu (placeholder for future items)
+-- Aurora RP - Donate Menu (F3)
+-- Donation shop menu - ready for customization
+
+if not CLIENT then return end
 
 local donateMenu = nil
-local donateCategories = {
-    ["VIP Статусы"] = {
-        {name = "VIP", price = 100, description = "Базовый VIP статус с привилегиями", id = "vip_basic"},
-        {name = "VIP Premium", price = 250, description = "Расширенный VIP с дополнительными возможностями", id = "vip_premium"},
-        {name = "VIP Elite", price = 500, description = "Максимальный VIP статус со всеми преимуществами", id = "vip_elite"}
+local donateMenuOpen = false
+
+local donateItems = {
+    vip = {
+        {name = "VIP Basic", price = 100, description = "Basic VIP status with perks", command = "!givevip basic"},
+        {name = "VIP Premium", price = 250, description = "Premium VIP with extra benefits", command = "!givevip premium"},
+        {name = "VIP Elite", price = 500, description = "Elite VIP with all features", command = "!givevip elite"},
     },
-    ["Деньги"] = {
-        {name = "1000$", price = 50, description = "1000 игровых долларов", id = "money_1k"},
-        {name = "5000$", price = 200, description = "5000 игровых долларов", id = "money_5k"},
-        {name = "10000$", price = 350, description = "10000 игровых долларов", id = "money_10k"}
+    money = {
+        {name = "$5,000", price = 50, description = "Get $5,000 in-game cash", command = "!givemoney 5000"},
+        {name = "$25,000", price = 200, description = "Get $25,000 in-game cash", command = "!givemoney 25000"},
+        {name = "$100,000", price = 700, description = "Get $100,000 in-game cash", command = "!givemoney 100000"},
     },
-    ["Оружие"] = {
-        {name = "Нож", price = 25, description = "Боевой нож для ближнего боя", id = "weapon_knife"},
-        {name = "Пистолет", price = 75, description = "Стандартный пистолет", id = "weapon_pistol"},
-        {name = "Автомат", price = 150, description = "Штурмовая винтовка", id = "weapon_rifle"}
+    weapons = {
+        {name = "Weapon Pack 1", price = 150, description = "Basic weapons pack", command = "!giveweapons pack1"},
+        {name = "Weapon Pack 2", price = 300, description = "Advanced weapons pack", command = "!giveweapons pack2"},
+        {name = "Special Weapons", price = 500, description = "Exclusive weapons", command = "!giveweapons special"},
     },
-    ["Транспорт"] = {
-        {name = "Спортивная машина", price = 300, description = "Быстрый спортивный автомобиль", id = "car_sport"},
-        {name = "Лимузин", price = 500, description = "Роскошный лимузин", id = "car_limousine"},
-        {name = "Мотоцикл", price = 150, description = "Скоростной мотоцикл", id = "vehicle_motorcycle"}
+    vehicles = {
+        {name = "Sports Car", price = 400, description = "Fast sports vehicle", command = "!givevehicle sport"},
+        {name = "Luxury Sedan", price = 350, description = "Comfortable luxury car", command = "!givevehicle luxury"},
+        {name = "Motorcycle", price = 200, description = "Fast motorcycle", command = "!givevehicle bike"},
     },
-    ["Домашние животные"] = {
-        {name = "Собака", price = 100, description = "Верный питомец-охранник", id = "pet_dog"},
-        {name = "Кот", price = 50, description = "Домашний кот", id = "pet_cat"}
+    pets = {
+        {name = "Dog Companion", price = 100, description = "Loyal dog pet", command = "!givepet dog"},
+        {name = "Cat Companion", price = 80, description = "Cute cat pet", command = "!givepet cat"},
     }
 }
 
--- This will be configured by server owner later
-local donateConfig = {
-    enabled = true,
-    currency = "RUB",
-    paymentMethods = {"Qiwi", "Yandex.Money", "WebMoney", "Card"}
+local categoryNames = {
+    vip = "VIP Status",
+    money = "Money Packs",
+    weapons = "Weapon Packs",
+    vehicles = "Vehicles",
+    pets = "Pets"
 }
 
-function OpenAuroraDonateMenu()
-    if IsValid(donateMenu) then
-        donateMenu:Remove()
-    end
+local categoryIcons = {
+    vip = "⭐",
+    money = "💰",
+    weapons = "🔫",
+    vehicles = "🚗",
+    pets = "🐾"
+}
+
+local function createDonateMenu()
+    if IsValid(donateMenu) then donateMenu:Remove() end
     
     donateMenu = vgui.Create("DFrame")
-    donateMenu:SetSize(850, 650)
+    donateMenu:SetSize(900, 650)
     donateMenu:Center()
     donateMenu:SetTitle("")
-    donateMenu:SetVisible(true)
+    donateMenu:SetVisible(false)
     donateMenu:SetDraggable(true)
     donateMenu:ShowCloseButton(true)
     donateMenu:MakePopup()
     
-    -- Custom title bar with aurora effect
+    -- Custom title bar
     donateMenu.Paint = function(self, w, h)
-        draw.RoundedBoxEx(15, 0, 0, w, h, Color(15, 15, 25, 245), true, true, true, true)
+        draw.RoundedBox(8, 0, 0, w, h, Color(20, 20, 40, 230))
+        draw.RoundedBox(8, 0, 0, w, 60, Color(255, 215, 0, 200)) -- Gold color for donate
         
-        -- Aurora gradient background
-        local gradient = surface.GetTextureID("gui/gradient_down")
-        surface.SetTexture(gradient)
-        
-        -- Purple to blue gradient
-        for i = 0, 100 do
-            local alpha = 150 - i
-            surface.SetDrawColor(138, 43, 226, alpha)
-            surface.DrawRect(0, i * 0.8, w, 1)
-        end
-        
-        -- Title
-        draw.SimpleText("AURORA RP", "DermaLarge", w/2, 20, Color(138, 43, 226, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-        draw.SimpleText("МАГАЗИН ПОЖЕРТВОВАНИЙ", "DermaDefault", w/2, 55, Color(200, 200, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-        
-        -- Info text
-        draw.SimpleText("Выберите товар для покупки", "DermaSmall", w/2, 75, Color(150, 150, 150, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        draw.SimpleText("AURORA RP - DONATE SHOP", "DermaExtraLarge", w/2, 18, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        draw.SimpleText("Support the server and get exclusive items!", "DermaDefault", w/2, 45, Color(255, 255, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
     end
     
-    -- Categories panel (left side)
-    local categoriesPanel = vgui.Create("DPanel", donateMenu)
-    categoriesPanel:SetPos(20, 90)
-    categoriesPanel:SetSize(180, 540)
-    categoriesPanel.Paint = function(self, w, h)
-        draw.RoundedBox(10, 0, 0, w, h, Color(25, 25, 40, 220))
+    -- Category selector (left panel)
+    local categoryPanel = vgui.Create("DPanel", donateMenu)
+    categoryPanel:SetPos(10, 70)
+    categoryPanel:SetSize(200, 570)
+    categoryPanel.Paint = function(self, w, h)
+        draw.RoundedBox(4, 0, 0, w, h, Color(30, 30, 50, 200))
     end
     
-    -- Items panel (right side)
-    local itemsPanel = vgui.Create("DPanel", donateMenu)
-    itemsPanel:SetPos(220, 90)
-    itemsPanel:SetSize(610, 540)
-    itemsPanel.Paint = function(self, w, h)
-        draw.RoundedBox(10, 0, 0, w, h, Color(25, 25, 40, 220))
-    end
+    -- Items display (right panel)
+    local itemsScroll = vgui.Create("DScrollPanel", donateMenu)
+    itemsScroll:SetPos(220, 70)
+    itemsScroll:SetSize(670, 570)
+    itemsScroll:GetCanvas():DockPadding(10, 10, 10, 10)
     
-    local selectedDonateCategory = 1
-    local selectedDonateItem = 1
+    local selectedCategory = "vip"
     
-    -- Category buttons
-    local categoryY = 10
-    for catIndex, categoryName in ipairs(table.GetKeys(donateCategories)) do
-        local catButton = vgui.Create("DButton", categoriesPanel)
-        catButton:SetSize(160, 45)
-        catButton:SetPos(10, categoryY)
-        catButton:SetText(categoryName)
-        catButton:SetFont("DermaDefault")
+    local function updateItemsList()
+        itemsScroll:Clear()
         
-        catButton.Paint = function(self, w, h)
-            if selectedDonateCategory == catIndex then
-                draw.RoundedBox(8, 0, 0, w, h, Color(138, 43, 226, 220))
-            else
-                draw.RoundedBox(8, 0, 0, w, h, Color(40, 40, 60, 180))
-            end
-        end
+        local items = donateItems[selectedCategory] or {}
+        local yPos = 0
         
-        catButton.DoClick = function()
-            selectedDonateCategory = catIndex
-            UpdateDonateItemsList()
-        end
-        
-        categoryY = categoryY + 55
-    end
-    
-    -- Items list
-    local itemList = vgui.Create("DScrollPanel", itemsPanel)
-    itemList:SetSize(590, 520)
-    itemList:SetPos(10, 10)
-    
-    function UpdateDonateItemsList()
-        itemList:Clear()
-        
-        local currentCategory = table.GetKeys(donateCategories)[selectedDonateCategory]
-        local items = donateCategories[currentCategory]
-        
-        local itemY = 0
-        for itemIndex, item in ipairs(items) do
-            local itemPanel = vgui.Create("DPanel", itemList)
-            itemPanel:SetSize(570, 90)
-            itemPanel:SetPos(10, itemY)
+        for _, item in ipairs(items) do
+            local itemCard = vgui.Create("DPanel", itemsScroll)
+            itemCard:SetSize(640, 90)
+            itemCard:SetPos(0, yPos)
             
-            itemPanel.Paint = function(self, w, h)
-                if selectedDonateItem == itemIndex then
-                    draw.RoundedBox(8, 0, 0, w, h, Color(138, 43, 226, 180))
-                else
-                    draw.RoundedBox(8, 0, 0, w, h, Color(40, 40, 60, 150))
-                end
+            itemCard.Paint = function(self, w, h)
+                draw.RoundedBox(4, 0, 0, w, h, Color(50, 50, 70, 200))
+                draw.RoundedBox(4, 0, 0, 4, h, Color(255, 215, 0)) -- Gold accent
             end
             
             -- Item name
-            local nameLabel = vgui.Create("DLabel", itemPanel)
-            nameLabel:SetPos(15, 10)
-            nameLabel:SetSize(300, 25)
-            nameLabel:SetText(item.name)
+            local nameLabel = vgui.Create("DLabel", itemCard)
+            nameLabel:SetText(categoryIcons[selectedCategory] .. " " .. item.name)
             nameLabel:SetFont("DermaLarge")
-            nameLabel:SetTextColor(Color(255, 255, 255))
+            nameLabel:SetTextColor(Color(255, 215, 0))
+            nameLabel:SetPos(15, 10)
+            nameLabel:SizeToContents()
             
             -- Item description
-            local descLabel = vgui.Create("DLabel", itemPanel)
-            descLabel:SetPos(15, 35)
-            descLabel:SetSize(350, 20)
+            local descLabel = vgui.Create("DLabel", itemCard)
             descLabel:SetText(item.description)
             descLabel:SetFont("DermaDefault")
             descLabel:SetTextColor(Color(200, 200, 200))
+            descLabel:SetPos(15, 35)
+            descLabel:SetSize(400, 30)
             
             -- Price
-            local priceLabel = vgui.Create("DLabel", itemPanel)
-            priceLabel:SetPos(15, 60)
-            priceLabel:SetSize(200, 20)
-            priceLabel:SetText("Цена: " .. item.price .. " " .. donateConfig.currency)
-            priceLabel:SetFont("DermaDefault")
-            priceLabel:SetTextColor(Color(50, 205, 50))
+            local priceLabel = vgui.Create("DLabel", itemCard)
+            priceLabel:SetText("$" .. item.price .. " USD")
+            priceLabel:SetFont("DermaExtraLarge")
+            priceLabel:SetTextColor(Color(100, 255, 100))
+            priceLabel:SetPos(450, 25)
+            priceLabel:SizeToContents()
             
             -- Buy button
-            local buyButton = vgui.Create("DButton", itemPanel)
-            buyButton:SetPos(420, 25)
-            buyButton:SetSize(140, 40)
-            buyButton:SetText("КУПИТЬ")
-            buyButton:SetFont("DermaDefault")
+            local buyBtn = vgui.Create("DButton", itemCard)
+            buyBtn:SetText("BUY NOW")
+            buyBtn:SetPos(520, 25)
+            buyBtn:SetSize(110, 40)
+            buyBtn:SetFont("DermaDefaultBold")
             
-            buyButton.Paint = function(self, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, Color(50, 205, 50, 220))
+            buyBtn.Paint = function(self, w, h)
+                draw.RoundedBox(4, 0, 0, w, h, Color(255, 215, 0))
+                if self:IsHovered() then
+                    draw.RoundedBox(4, 0, 0, w, h, Color(255, 235, 50))
+                end
             end
             
-            buyButton.DoClick = function()
-                -- Placeholder for purchase logic
-                Derma_Message("Для покупки обратитесь к администратору сервера или используйте команду:\n/donate " .. item.id, "Aurora RP Магазин", "OK")
-                
-                -- Send purchase request to server
-                RunConsoleCommand("say", "!donate " .. item.id)
-                notification.AddLegacy("Запрос на покупку: " .. item.name, NOTIFY_GENERIC, 5)
+            buyBtn.DoClick = function()
+                Derma_Message("To purchase this item, please visit our store at:\n\nhttps://aurora-rp.store\n\nOr contact an administrator!", "Purchase Info", "OK")
+                -- You can customize this to open a URL or execute commands
+                -- gui.OpenURL("https://your-store-link.com/item/" .. item.command)
             end
             
-            itemY = itemY + 100
+            yPos = yPos + 100
         end
+        
+        itemsScroll:SetCanvasSize(650, yPos)
     end
     
-    UpdateDonateItemsList()
+    -- Category buttons
+    local btnY = 10
+    for catKey, catName in pairs(categoryNames) do
+        local catBtn = vgui.Create("DButton", categoryPanel)
+        catBtn:SetText(categoryIcons[catKey] .. " " .. catName)
+        catBtn:SetPos(10, btnY)
+        catBtn:SetSize(180, 50)
+        catBtn:SetFont("DermaDefaultBold")
+        
+        catBtn.Paint = function(self, w, h)
+            local color = selectedCategory == catKey and Color(255, 215, 0) or Color(50, 50, 80)
+            draw.RoundedBox(4, 0, 0, w, h, color)
+        end
+        
+        catBtn.DoClick = function()
+            selectedCategory = catKey
+            updateItemsList()
+        end
+        
+        btnY = btnY + 60
+    end
     
-    -- Payment methods info at bottom
-    local paymentInfo = vgui.Create("DLabel", donateMenu)
-    paymentInfo:SetPos(220, 635)
-    paymentInfo:SetSize(610, 20)
-    paymentInfo:SetText("Доступные способы оплаты: " .. table.concat(donateConfig.paymentMethods, ", "))
-    paymentInfo:SetFont("DermaSmall")
-    paymentInfo:SetTextColor(Color(150, 150, 150))
+    -- Info panel at bottom
+    local infoPanel = vgui.Create("DPanel", donateMenu)
+    infoPanel:SetPos(220, 650)
+    infoPanel:SetSize(670, 40)
+    infoPanel.Paint = function(self, w, h)
+        draw.RoundedBox(4, 0, 0, w, h, Color(40, 40, 60, 200))
+        draw.SimpleText("All purchases support server development. Thank you!", "DermaDefault", w/2, 10, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+    end
+    
+    -- Initial population
+    updateItemsList()
 end
 
--- Bind key to open donate menu (F3 by default)
-hook.Add("Think", "AuroraRP_DonateMenuBind", function()
-    if input.IsKeyDown(KEY_F3) then
-        if not donateMenu or not IsValid(donateMenu) then
-            OpenAuroraDonateMenu()
+-- F3 to open donate menu
+hook.Add("HUDPaint", "AuroraRP_DonateMenuKey", function()
+    if input.IsKeyDown(KEY_F3) and not donateMenuOpen then
+        donateMenuOpen = true
+        if not IsValid(donateMenu) then
+            createDonateMenu()
         end
+        donateMenu:SetVisible(true)
+        donateMenu:MakePopup()
+    end
+    
+    if not input.IsKeyDown(KEY_F3) then
+        donateMenuOpen = false
     end
 end)
 
-print("Aurora RP Donate Menu Loaded!")
+print("[Aurora RP] Donate menu loaded!")
